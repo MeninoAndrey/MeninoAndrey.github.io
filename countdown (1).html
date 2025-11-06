@@ -3,125 +3,162 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<title>Contagem regressiva</title>
+<title>CONTADOR</title>
 <style>
-  :root { --bg:#0b132b; --card:#1c2541; --acc:#5bc0be; --txt:#e0e0e0; --dim:#9aa4b2; }
-  html,body { height:100%; margin:0; }
-  body {
-    background: radial-gradient(1000px 600px at 50% -20%, #162447 0%, #0b132b 60%);
-    color: var(--txt); font-family: system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif;
-    display:flex; align-items:center; justify-content:center;
+  :root{--bg:#0b132b;--fg:#e7eef7;--muted:#94a3b8;--accent:#60a5fa;}
+  html,body{height:100%;margin:0}
+  body{
+    background: radial-gradient(1100px 700px at 50% -20%, #0f1a2e 0%, #0b132b 60%);
+    color:var(--fg);
+    display:grid; place-items:center;
+    font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", monospace;
   }
-  .wrap {
-    text-align:center; padding:28px; background:linear-gradient(180deg, var(--card), #111927);
-    border-radius:20px; box-shadow: 0 10px 30px rgba(0,0,0,.35); max-width: 720px; width: min(92vw, 720px);
+  .wrap{text-align:center;padding:28px;}
+  h1{
+    margin:0 0 18px; letter-spacing:0.22em;
+    font-weight:800; font-size: clamp(18px, 3.2vw, 26px);
+    color: var(--muted);
+  }
+  .timer{
+    display:inline-flex; align-items:center; gap:min(1.2vw,14px);
+    background:rgba(255,255,255,0.04);
+    border:1px solid rgba(255,255,255,0.06);
+    border-radius:22px; padding:18px 22px;
+    box-shadow: 0 10px 30px rgba(0,0,0,.25);
+  }
+  .unit{display:flex; gap:6px;}
+  .digit{
+    width:clamp(28px, 6.8vw, 54px);
+    height:clamp(40px, 9.8vw, 78px);
+    background:#0f1a2e;
     border:1px solid rgba(255,255,255,.06);
+    border-radius:12px;
+    display:grid; place-items:center;
+    font-weight:800; font-size: clamp(22px, 5.8vw, 46px); line-height:1;
+    position:relative; overflow:hidden;
   }
-  h1 { margin: 0 0 14px; font-weight:700; letter-spacing:.3px; }
-  p  { margin: 0 0 22px; color: var(--dim); }
-  .grid { display:grid; grid-template-columns: repeat(4, 1fr); gap: 12px; margin-top: 6px; }
-  .box { background:#0f1a2e; border:1px solid rgba(255,255,255,.06); border-radius:16px; padding:18px 10px; }
-  .num { font-size: clamp(32px, 7vw, 56px); font-weight:800; line-height:1; }
-  .lab { margin-top:6px; font-size:13px; letter-spacing:.25px; color: var(--acc); text-transform:uppercase; }
-  .foot { margin-top: 18px; font-size: 13px; color: var(--dim); }
-  .ok { color:#6ee7a8; }
-  .warn { color:#fca5a5; }
-  .bar { margin-top: 18px; display:flex; gap:8px; justify-content:center; flex-wrap:wrap; }
-  input[type="text"]{ width:min(70vw,460px); padding:8px 10px; border-radius:10px; border:1px solid rgba(255,255,255,.1); background:#0f1a2e; color:#e0e0e0; }
-  button{ padding:8px 14px; border-radius:10px; border:1px solid rgba(255,255,255,.1); background:#19243a; color:#e0e0e0; cursor:pointer; }
-  button:hover{ filter:brightness(1.1); }
+  .sep{
+    display:grid; place-items:center; padding:0 2px;
+    font-weight:800; font-size: clamp(18px, 3.8vw, 30px); color: var(--accent);
+    opacity:.9;
+  }
+
+  .digit .next, .digit .cur{
+    position:absolute; left:0; right:0;
+    display:grid; place-items:center; height:100%;
+  }
+  .digit .cur{ transform: translateY(0); opacity:1; }
+  .digit .next{ transform: translateY(100%); opacity:0; }
+
+  .digit.change .cur{ animation: goUp .28s ease forwards; }
+  .digit.change .next{ animation: comeUp .28s ease forwards; }
+
+  @keyframes goUp{ to{ transform: translateY(-100%); opacity:0; } }
+  @keyframes comeUp{ to{ transform: translateY(0%); opacity:1; } }
+
+  /* hidden state when < 24h */
+  .hide{ display:none !important; }
 </style>
 </head>
 <body>
   <div class="wrap">
-    <h1 id="title">Contagem regressiva</h1>
-    <p id="dest">Destino: <strong id="destVal">—</strong></p>
-    <div id="status" class="foot">Calculando…</div>
-
-    <div class="grid" role="timer" aria-live="polite" aria-label="Contagem regressiva">
-      <div class="box"><div id="d" class="num">--</div><div class="lab">dias</div></div>
-      <div class="box"><div id="h" class="num">--</div><div class="lab">horas</div></div>
-      <div class="box"><div id="m" class="num">--</div><div class="lab">min</div></div>
-      <div class="box"><div id="s" class="num">--</div><div class="lab">seg</div></div>
+    <h1>CONTADOR</h1>
+    <div class="timer" aria-live="polite" aria-label="Contagem regressiva">
+      <div class="unit" id="DD"></div>
+      <div class="sep" id="SEP1">:</div>
+      <div class="unit" id="HH"></div>
+      <div class="sep">:</div>
+      <div class="unit" id="MM"></div>
+      <div class="sep">:</div>
+      <div class="unit" id="SS"></div>
     </div>
-
-    <div class="bar">
-      <input id="link" type="text" readonly value="">
-      <button id="copy">Copiar link</button>
-    </div>
-
-    <div class="foot" id="foot"></div>
   </div>
 
 <script>
 (function(){
   const qs = new URLSearchParams(location.search);
-  const targetStr = qs.get("t") || "2025-11-07T06:00:00-03:00";
-  const titleStr  = qs.get("title") || "Contagem regressiva";
-  const labelStr  = qs.get("label") || "Destino";
-
+  const fallback = "2025-11-07T18:00:00-03:00";
+  const targetStr = qs.get("t") || fallback;
   const target = new Date(targetStr);
-  const elD = document.getElementById('d');
-  const elH = document.getElementById('h');
-  const elM = document.getElementById('m');
-  const elS = document.getElementById('s');
-  const status = document.getElementById('status');
-  const foot = document.getElementById('foot');
-  const h1 = document.getElementById('title');
-  const dest = document.getElementById('dest');
-  const destVal = document.getElementById('destVal');
 
-  h1.textContent = titleStr;
-  dest.firstChild.textContent = labelStr + ": ";
-  destVal.textContent = targetStr;
+  function mkDigit(){
+    const d = document.createElement("div");
+    d.className = "digit";
+    const cur = document.createElement("div");
+    const next = document.createElement("div");
+    cur.className = "cur"; next.className = "next";
+    cur.textContent = "0"; next.textContent = "0";
+    d.appendChild(cur); d.appendChild(next);
+    return d;
+  }
+  function setVal(digit, val){
+    const cur = digit.querySelector(".cur");
+    const next = digit.querySelector(".next");
+    if (cur.textContent === String(val)) return;
+    next.textContent = String(val);
+    digit.classList.add("change");
+    const onEnd = () => {
+      cur.textContent = next.textContent;
+      digit.classList.remove("change");
+      digit.removeEventListener("animationend", onEnd);
+    };
+    digit.addEventListener("animationend", onEnd);
+  }
+  function two(n){ return String(n).padStart(2,"0"); }
+  function twoDigits(int){ const s = two(int); return [s[0], s[1]]; }
 
-  function fmt(n){ return String(n).padStart(2,'0'); }
+  const DD = document.getElementById("DD");
+  const HH = document.getElementById("HH");
+  const MM = document.getElementById("MM");
+  const SS = document.getElementById("SS");
+  const SEP1 = document.getElementById("SEP1");
+  const nodes = {
+    D: [mkDigit(), mkDigit()],
+    H: [mkDigit(), mkDigit()],
+    M: [mkDigit(), mkDigit()],
+    S: [mkDigit(), mkDigit()],
+  };
+  DD.appendChild(nodes.D[0]); DD.appendChild(nodes.D[1]);
+  HH.appendChild(nodes.H[0]); HH.appendChild(nodes.H[1]);
+  MM.appendChild(nodes.M[0]); MM.appendChild(nodes.M[1]);
+  SS.appendChild(nodes.S[0]); SS.appendChild(nodes.S[1]);
 
-  function tick(){
-    const now = new Date();
-    if (isNaN(target.getTime())){
-      status.innerHTML = '<span class="warn">Data alvo inválida. Use ISO como 2025-11-07T06:00:00-03:00</span>';
-      return;
-    }
-    let diff = target.getTime() - now.getTime();
-    if (diff <= 0){
-      elD.textContent = '00'; elH.textContent = '00';
-      elM.textContent = '00'; elS.textContent = '00';
-      status.innerHTML = '<span class="ok">Chegou o momento! 🎉</span>';
-      foot.textContent = '';
-      return;
-    }
-    const sec = Math.floor(diff / 1000);
+  function render(sec){
+    if (sec < 0) sec = 0;
     const d = Math.floor(sec / 86400);
     const h = Math.floor((sec % 86400) / 3600);
     const m = Math.floor((sec % 3600) / 60);
     const s = sec % 60;
 
-    elD.textContent = fmt(d);
-    elH.textContent = fmt(h);
-    elM.textContent = fmt(m);
-    elS.textContent = fmt(s);
+    const [d1,d2] = twoDigits(d);
+    const [h1,h2] = twoDigits(h);
+    const [m1,m2] = twoDigits(m);
+    const [s1,s2] = twoDigits(s);
 
-    const opts = {year:'numeric',month:'2-digit',day:'2-digit',hour:'2-digit',minute:'2-digit',second:'2-digit'};
-    status.textContent = 'Agora: ' + new Date().toLocaleString(undefined, opts);
-    foot.textContent = 'Destino (no seu fuso): ' + target.toLocaleString(undefined, opts);
-    requestAnimationFrame(() => setTimeout(tick, 250));
+    setVal(nodes.D[0], d1); setVal(nodes.D[1], d2);
+    setVal(nodes.H[0], h1); setVal(nodes.H[1], h2);
+    setVal(nodes.M[0], m1); setVal(nodes.M[1], m2);
+    setVal(nodes.S[0], s1); setVal(nodes.S[1], s2);
+
+    // Auto-hide days and first colon when under 24h
+    if (d === 0){
+      DD.classList.add("hide");
+      SEP1.classList.add("hide");
+    } else {
+      DD.classList.remove("hide");
+      SEP1.classList.remove("hide");
+    }
+  }
+
+  function tick(){
+    if (isNaN(target.getTime())){ return; }
+    const now = new Date();
+    const diff = Math.max(0, Math.floor((target.getTime() - now.getTime()) / 1000));
+    render(diff);
+    if (diff === 0) return;
+    requestAnimationFrame(()=>setTimeout(tick, 250));
   }
   tick();
-
-  const base = location.href.split('?')[0];
-  const share = base + '?t=' + encodeURIComponent(targetStr)
-                        + '&title=' + encodeURIComponent(titleStr)
-                        + '&label=' + encodeURIComponent(labelStr);
-  const link = document.getElementById('link');
-  link.value = share;
-
-  document.getElementById('copy').addEventListener('click', () => {
-    link.select(); link.setSelectionRange(0, 99999);
-    document.execCommand('copy');
-    document.getElementById('copy').textContent = 'Copiado!';
-    setTimeout(()=>{ document.getElementById('copy').textContent='Copiar link'; }, 1500);
-  });
 })();
 </script>
 </body>
